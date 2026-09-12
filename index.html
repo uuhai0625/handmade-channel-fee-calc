@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script>
+  (function() {
+    var GA_ID = 'G-N7YBTVXK3L';
+    var isLocalDev = ['localhost', '127.0.0.1', ''].includes(location.hostname);
+    if (isLocalDev) return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', GA_ID);
+  })();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ハンドメイド販路 手数料・入金サイクル比較シミュレーター</title>
+<style>
+  :root {
+    --bg: #faf6f2;
+    --panel: #ffffff;
+    --border: #ecdfd3;
+    --text: #3a2e26;
+    --muted: #6e5e4f;
+    --accent: #c2703d;
+    --accent-dark: #a35a2e;
+    --ok-bg: #f5ede2;
+    --locked: #b8a898;
+    --best: #fdecc8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  header {
+    background: linear-gradient(135deg, #c2703d, #a35a2e);
+    color: #fff;
+    padding: 32px 20px 26px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 8px; font-size: 1.5rem; }
+  header p { margin: 0; opacity: .92; font-size: .92rem; }
+  .disclaimer {
+    max-width: 780px;
+    margin: 18px auto 0;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.4);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: .82rem;
+  }
+  main { max-width: 820px; margin: 0 auto; padding: 24px 16px 60px; }
+  section.card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  section.card h2 {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  section.card .desc { color: var(--muted); font-size: .85rem; margin: 0 0 14px; }
+  .badge {
+    display: inline-block;
+    font-size: .7rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #eee;
+    color: #4a4a4a;
+    font-weight: bold;
+  }
+  .badge.pro { background: #fff1cc; color: #8a6100; }
+
+  label.field { display: block; margin-bottom: 14px; }
+  label.field .lbl { font-size: .85rem; font-weight: bold; }
+  label.field .hint { font-size: .75rem; color: var(--muted); font-weight: normal; display: block; margin-top: 2px; }
+  label.field input, label.field select {
+    width: 100%; margin-top: 5px; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: .95rem; font-family: inherit; background: #fffdfb;
+  }
+  .row2 { display: flex; gap: 12px; }
+  .row2 > * { flex: 1; }
+
+  .platform-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 6px; }
+  .platform-chip {
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+    min-height: 44px; box-sizing: border-box;
+    display: flex; align-items: center; gap: 8px; font-size: .85rem; cursor: pointer;
+    background: #fffdfb;
+  }
+  .platform-chip.selected { border-color: var(--accent); background: var(--ok-bg); }
+  .platform-chip input { margin: 0; }
+  .platform-chip:focus-within { outline: 2px solid var(--accent-dark); outline-offset: 1px; }
+
+  .sub-options { margin-top: 10px; padding: 12px; background: #f7f1e9; border-radius: 8px; font-size: .84rem; }
+  .sub-options label { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+
+  #results { margin-top: 18px; }
+  .result-row {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 8px; background: #fff;
+  }
+  .result-row.best { border-color: #c2953a; background: var(--best); }
+  .result-row .top { display: flex; justify-content: space-between; align-items: center; }
+  .result-row .name { font-weight: bold; font-size: .92rem; }
+  .result-row .sub { color: var(--muted); font-size: .76rem; margin-top: 4px; }
+  .result-row .amount { font-size: 1.15rem; font-weight: bold; color: var(--accent-dark); }
+  .result-row.best .amount { color: #8a6100; }
+  .crown { font-size: .75rem; color: #8a6100; font-weight: bold; }
+  .cycle-line { margin-top: 6px; font-size: .78rem; color: var(--muted); }
+
+  .teaser {
+    margin-top: 12px; padding: 14px; border: 1px dashed var(--locked); border-radius: 10px;
+    text-align: center; color: var(--muted); font-size: .85rem;
+  }
+  .teaser .blurred { filter: blur(4px); user-select: none; }
+
+  .locked-panel {
+    border: 1px dashed var(--locked);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+    color: var(--muted);
+    background: #fbf7f2;
+  }
+  .locked-panel .feat-list { text-align: left; max-width: 460px; margin: 12px auto; font-size: .85rem; padding-left: 1.2em; }
+  .buy-btn {
+    display: inline-block; margin-top: 10px;
+    background: var(--accent-dark); color: #fff; font-weight: bold;
+    padding: 10px 22px; border-radius: 999px; text-decoration: none;
+    font-size: .9rem;
+  }
+  .buy-btn:hover { background: #7d4321; }
+
+  .btn-secondary {
+    background: #fff; border: 1px solid var(--border); color: var(--text);
+    padding: 8px 14px; border-radius: 8px; font-size: .82rem; cursor: pointer;
+  }
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+  table.compare { width: 100%; min-width: 520px; border-collapse: collapse; font-size: .84rem; margin-top: 10px; }
+  table.compare th, table.compare td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  table.compare th { color: var(--muted); font-weight: normal; font-size: .78rem; }
+  table.compare tr.best-row td { background: var(--best); font-weight: bold; }
+
+  .history-item {
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: .84rem; word-break: break-all;
+  }
+  .history-item .h-meta { color: var(--muted); font-size: .76rem; }
+  .history-item .h-del { background: none; border: none; color: #d0392b; cursor: pointer; font-size: .8rem; }
+
+  footer {
+    max-width: 820px; margin: 0 auto; padding: 0 16px 40px;
+    font-size: .76rem; color: var(--muted);
+  }
+  footer .updated { font-weight: bold; }
+  footer a { color: var(--muted); }
+
+  @media print {
+    header .disclaimer, .btn-row, #pro-section, .buy-btn, #history-section .btn-row { display: none !important; }
+    body { background: #fff; }
+    header { background: #c2703d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    section.card { break-inside: avoid; border: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ハンドメイド販路 手数料・入金サイクル比較シミュレーター</h1>
+  <p>BASE・minne・Creema・メルカリShops、手数料だけでなく「振込手数料」「入金までの日数」まで込みで手取りを横断比較</p>
+  <div class="disclaimer">
+    ⚠️ 各プラットフォームの手数料・入金サイクルは<strong>2026年9月時点の公表情報に基づく概算</strong>です。料率・規約は予告なく変更される場合があるため、正確な金額・最新の条件は各プラットフォーム公式のヘルプページで必ずご確認ください。
+  </div>
+</header>
+
+<main>
+
+  <section class="card">
+    <h2>① 商品情報を入力</h2>
+    <div class="row2">
+      <label class="field">
+        <span class="lbl">商品価格(円)</span>
+        <input type="number" id="in-price" value="3000" min="0" step="1">
+      </label>
+      <label class="field">
+        <span class="lbl">送料(お客様負担分・円)</span>
+        <span class="hint">プラットフォームによって手数料の計算対象に含まれます</span>
+        <input type="number" id="in-shipping" value="0" min="0" step="1">
+      </label>
+    </div>
+    <label class="field" id="qty-field">
+      <span class="lbl">月間の想定販売個数</span>
+      <span class="hint">振込手数料の実質負担・月間手取り額の試算に使用します</span>
+      <input type="number" id="in-qty" value="5" min="1" step="1">
+    </label>
+  </section>
+
+  <section class="card">
+    <h2>② 出品先を選択 <span class="badge" id="edition-badge">FREE版: 1つ選択</span></h2>
+    <p class="desc">買い切り版では複数選択して横断比較できます。</p>
+
+    <div class="platform-grid" id="grp-platform"></div>
+
+    <div class="sub-options" id="sub-options"></div>
+  </section>
+
+  <section class="card">
+    <h2>③ 結果(手数料・振込手数料込みの手取り)</h2>
+    <div id="results"></div>
+    <div id="teaser" class="teaser" style="display:none;"></div>
+  </section>
+
+  <section class="card" id="pro-section">
+    <h2>④ 横断比較・月間手取り試算・履歴保存 <span class="badge pro">買い切り版</span></h2>
+    <div class="locked-panel">
+      <p>買い切り版(ダウンロード購入)では、以下の機能が使えます:</p>
+      <ul class="feat-list">
+        <li>選択した全出品先を一覧比較(手取り額でソート、最有利な出品先をハイライト)</li>
+        <li>比較結果のCSV出力</li>
+        <li>月間販売個数から「月間の実質手取り合計」を試算(振込手数料1回分を控除)</li>
+        <li>複数の価格帯・商品シナリオの保存・履歴管理</li>
+      </ul>
+      <a class="buy-btn" href="https://uuhai0625.booth.pm/items/PLACEHOLDER" id="buyLink" target="_blank" rel="noopener">買い切り版を見る(BOOTH)</a>
+    </div>
+  </section>
+
+  <section class="card" id="compare-section" style="display:none;">
+    <h2>④ 横断比較</h2>
+    <div style="overflow-x:auto;">
+      <table class="compare" id="compare-table"></table>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="csvBtn">CSV出力</button>
+    </div>
+  </section>
+
+  <section class="card" id="monthly-section" style="display:none;">
+    <h2>⑤ 月間の実質手取り試算</h2>
+    <p class="desc">上で入力した「月間の想定販売個数」をもとに、振込手数料を月1回の申請・受取と仮定して試算します。各社の売上繰越条件(例: minneは1,000円未満、メルカリShopsは5,000円未満で翌月繰越)は反映していない簡易試算です。</p>
+    <div id="monthly-results"></div>
+  </section>
+
+  <section class="card" id="history-section" style="display:none;">
+    <h2>⑥ シナリオ保存</h2>
+    <div class="btn-row" style="margin-top:0;">
+      <label for="historyLabelInput" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">シナリオ名</label>
+      <input type="text" id="historyLabelInput" placeholder="例) アクセサリー3000円帯" style="flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-size:.85rem;">
+      <button class="btn-secondary" id="saveHistoryBtn">現在の内容を保存</button>
+    </div>
+    <div id="historyList" style="margin-top:14px;"></div>
+  </section>
+
+  <div class="btn-row">
+    <button class="btn-secondary" id="resetBtn">入力内容をリセット</button>
+  </div>
+
+</main>
+
+<footer>
+  <p><span class="updated">最終更新: 2026年9月時点の公表手数料・振込規定に基づいて作成。</span>
+  各プラットフォームの料率・規定改定に気づき次第、無償でアップデート版を配布します。</p>
+  <p>本ツールは完全にブラウザ内で動作し、入力した価格・送料・販売個数はどこにも送信されません(開発者ツールのネットワークタブで通信が発生しないことをご確認いただけます)。</p>
+  <p>収支の記録には無料の<a href="https://uuhai0625.github.io/doujin-finance-visualizer/" target="_blank" rel="noopener">同人活動収支可視化シートメーカー</a>、請求関連には<a href="https://uuhai0625.github.io/creator-net-income-calc/" target="_blank" rel="noopener">クリエイター手取り計算機</a>もどうぞ。<a href="https://uuhai0625.booth.pm/" target="_blank" rel="noopener">他のツールも見る(BOOTHショップトップ)</a>。</p>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var EDITION = "free"; // "full" で買い切り完全版
+
+  function esc(s) {
+    return String(s).replace(/[<>&"']/g, function (c) {
+      return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  var FEE_TABLE = {
+    version: "2026-09-12",
+    base: {
+      label: "BASE",
+      compute: function (price, shipping, opts) {
+        var total = price + shipping;
+        var serviceRate = 0.03, paymentRate = 0.036, paymentFixed = 40;
+        var fee = total * serviceRate + total * paymentRate + paymentFixed;
+        var withdrawFee = 250 + (opts.smallWithdraw ? 500 : 0);
+        return {
+          net: Math.max(0, total - fee),
+          feeBreakdown: [
+            { label: "サービス利用料(3%)", amount: total * serviceRate },
+            { label: "決済手数料(3.6%+40円)", amount: total * paymentRate + paymentFixed }
+          ],
+          withdrawFee: withdrawFee,
+          cycle: "振込申請から10営業日(お急ぎ振込=翌営業日、最速振込=最短10分・手数料3%が別途)"
+        };
+      },
+      options: ["smallWithdraw"]
+    },
+    minne: {
+      label: "minne",
+      compute: function (price, shipping, opts) {
+        var total = price + shipping;
+        var rate = opts.plusMember ? 0.1056 : 0.10659;
+        var fee = total * rate;
+        return {
+          net: Math.max(0, total - fee),
+          feeBreakdown: [
+            { label: "販売手数料(" + (rate * 100).toFixed(3).replace(/0$/, "") + "%、" + (opts.plusMember ? "PLUS会員" : "非会員") + ")", amount: fee }
+          ],
+          withdrawFee: 220,
+          cycle: "自動振込、当月売上1,000円超で翌月末払い(1,000円未満は翌月に繰越)"
+        };
+      },
+      options: ["plusMember"]
+    },
+    creema: {
+      label: "Creema",
+      compute: function (price, shipping, opts) {
+        var total = price + shipping;
+        var rate = 0.1067;
+        var fee = total * rate;
+        var withdrawFee = 220; // 実際は振込金額により55〜275円で変動する目安値
+        return {
+          net: Math.max(0, total - fee),
+          feeBreakdown: [
+            { label: "成約手数料(9.7%税抜/10.67%税込)", amount: fee }
+          ],
+          withdrawFee: withdrawFee,
+          cycle: "申請月の翌月末払い(申請ベース、スピード振込=対象金額3.56%上乗せで最短翌営業日)",
+          note: "振込手数料は実際は振込金額により55〜275円で変動、ここでは目安として220円で試算"
+        };
+      }
+    },
+    mercari_shops: {
+      label: "メルカリShops",
+      compute: function (price, shipping, opts) {
+        var total = price + shipping;
+        var rate = 0.10;
+        var fee = total * rate; // 送料込みの売上金額に対して発生
+        return {
+          net: Math.max(0, total - fee),
+          feeBreakdown: [
+            { label: "販売手数料(送料込み売上額の10%)", amount: fee }
+          ],
+          withdrawFee: 200,
+          cycle: "月末締め・翌月10日振込(売上5,000円未満は翌月に繰越)"
+        };
+      }
+    }
+  };
+
+  var PLATFORM_ORDER = ["base", "minne", "creema", "mercari_shops"];
+
+  var OPTION_DEFS = {
+    smallWithdraw: { label: "振込額が2万円未満(事務手数料500円が追加されます)", type: "checkbox" },
+    plusMember: { label: "minne PLUS会員(手数料10.56%、非会員は10.659%)", type: "checkbox" }
+  };
+
+  var selected = {};
+  var platformOpts = {};
+
+  function fmtYen(n) { var r = Math.round(n); return (r < 0 ? "-¥" : "¥") + Math.abs(r).toLocaleString(); }
+
+  function buildChip(key, def, groupEl) {
+    var chip = document.createElement("label");
+    chip.className = "platform-chip";
+    chip.dataset.key = key;
+    var input = document.createElement("input");
+    input.type = EDITION === "full" ? "checkbox" : "radio";
+    input.name = "platform-select";
+    input.addEventListener("change", function () {
+      if (EDITION === "full") {
+        if (input.checked) selected[key] = true; else delete selected[key];
+      } else {
+        selected = {};
+        selected[key] = true;
+        document.querySelectorAll(".platform-chip").forEach(function (c) { c.classList.remove("selected"); });
+      }
+      chip.classList.toggle("selected", !!selected[key]);
+      renderSubOptions();
+      compute();
+    });
+    chip.appendChild(input);
+    var span = document.createElement("span");
+    span.textContent = def.label;
+    chip.appendChild(span);
+    groupEl.appendChild(chip);
+  }
+
+  var grpPlatform = document.getElementById("grp-platform");
+  PLATFORM_ORDER.forEach(function (k) { buildChip(k, FEE_TABLE[k], grpPlatform); });
+
+  function renderSubOptions() {
+    var container = document.getElementById("sub-options");
+    container.innerHTML = "";
+    var keys = Object.keys(selected);
+    if (!keys.length) { container.style.display = "none"; return; }
+    container.style.display = "block";
+    keys.forEach(function (key) {
+      var def = FEE_TABLE[key];
+      if (!def.options) return;
+      def.options.forEach(function (optName) {
+        var od = OPTION_DEFS[optName];
+        if (!platformOpts[key]) platformOpts[key] = {};
+        var row = document.createElement("label");
+        row.innerHTML = '<input type="checkbox" data-platform="' + key + '" data-opt="' + optName + '"> <span>' + def.label + ': ' + od.label + '</span>';
+        container.appendChild(row);
+      });
+    });
+    container.querySelectorAll("input[type=checkbox]").forEach(function (cb) {
+      cb.addEventListener("change", function () {
+        platformOpts[cb.dataset.platform][cb.dataset.opt] = cb.checked;
+        compute();
+      });
+    });
+  }
+
+  function getOpts(key) { return platformOpts[key] || {}; }
+
+  function computeOne(key, price, shipping) {
+    var def = FEE_TABLE[key];
+    var opts = getOpts(key);
+    var r = def.compute(price, shipping, opts);
+    return { key: key, label: def.label, net: r.net, feeBreakdown: r.feeBreakdown, withdrawFee: r.withdrawFee, cycle: r.cycle, note: r.note };
+  }
+
+  var lastResults = [];
+
+  function compute() {
+    var price = Math.max(0, parseFloat(document.getElementById("in-price").value) || 0);
+    var shipping = Math.max(0, parseFloat(document.getElementById("in-shipping").value) || 0);
+
+    var keys = Object.keys(selected);
+    var results = keys.map(function (k) { return computeOne(k, price, shipping); });
+    results.sort(function (a, b) { return b.net - a.net; });
+    lastResults = results;
+
+    renderResults(results, price, shipping);
+
+    if (EDITION === "full") {
+      renderCompareTable(results);
+      renderMonthly(results);
+    }
+  }
+
+  function renderResults(results, price, shipping) {
+    var el = document.getElementById("results");
+    var teaser = document.getElementById("teaser");
+    el.innerHTML = "";
+    if (!results.length) {
+      el.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">出品先を選択すると、手取り額が表示されます。</p>';
+      teaser.style.display = "none";
+      return;
+    }
+
+    results.forEach(function (r, i) {
+      var row = document.createElement("div");
+      row.className = "result-row" + (i === 0 && results.length > 1 ? " best" : "");
+      var breakdown = r.feeBreakdown.map(function (f) { return esc(f.label) + ": -" + fmtYen(f.amount); }).join(" / ");
+      var noteHtml = r.note ? '<div class="cycle-line">※' + esc(r.note) + '</div>' : "";
+      row.innerHTML =
+        '<div class="top"><div><div class="name">' + (i === 0 && results.length > 1 ? '<span class="crown">👑 </span>' : '') + esc(r.label) + '</div>' +
+        '<div class="sub">' + breakdown + '</div></div>' +
+        '<div class="amount">' + fmtYen(r.net) + '</div></div>' +
+        '<div class="cycle-line">振込手数料: ' + fmtYen(r.withdrawFee) + '/回 ・ 入金サイクル: ' + esc(r.cycle) + '</div>' +
+        noteHtml;
+      el.appendChild(row);
+    });
+
+    if (EDITION !== "full" && results.length === 1) {
+      var diffs = estimateOtherPlatformSpread(price, shipping, results[0].key);
+      if (diffs) {
+        teaser.style.display = "block";
+        teaser.innerHTML = '他の出品先で売ると、手取りは<span class="blurred">¥' + diffs.min.toLocaleString() + '〜¥' + diffs.max.toLocaleString() + '</span>の範囲で変わります。<br>買い切り版なら全出品先を一度に比較し、月間の実質手取りまで試算できます。';
+      } else {
+        teaser.style.display = "none";
+      }
+    } else {
+      teaser.style.display = "none";
+    }
+  }
+
+  function estimateOtherPlatformSpread(price, shipping, excludeKey) {
+    var allKeys = PLATFORM_ORDER.filter(function (k) { return k !== excludeKey; });
+    var nets = allKeys.map(function (k) { return computeOne(k, price, shipping).net; });
+    if (!nets.length) return null;
+    return { min: Math.round(Math.min.apply(null, nets)), max: Math.round(Math.max.apply(null, nets)) };
+  }
+
+  function renderCompareTable(results) {
+    var section = document.getElementById("compare-section");
+    var table = document.getElementById("compare-table");
+    if (!results.length) { section.style.display = "none"; return; }
+    section.style.display = "block";
+    var rows = results.map(function (r, i) {
+      return "<tr" + (i === 0 && results.length > 1 ? ' class="best-row"' : '') + "><td>" + esc(r.label) + "</td><td>" + fmtYen(r.net) + "</td><td>" + fmtYen(r.withdrawFee) + "</td><td>" + esc(r.cycle) + "</td></tr>";
+    }).join("");
+    table.innerHTML = "<tr><th>出品先</th><th>手取り額</th><th>振込手数料</th><th>入金サイクル</th></tr>" + rows;
+  }
+
+  function renderMonthly(results) {
+    var section = document.getElementById("monthly-section");
+    if (!results.length) { section.style.display = "none"; return; }
+    section.style.display = "block";
+    var qtyRaw = parseInt(document.getElementById("in-qty").value, 10);
+    var qty = Math.max(1, isNaN(qtyRaw) ? 1 : qtyRaw);
+    var el = document.getElementById("monthly-results");
+    el.innerHTML = "";
+    results.forEach(function (r) {
+      var monthlyGross = r.net * qty;
+      var monthlyNet = monthlyGross - r.withdrawFee; // 月1回の振込申請と仮定
+      var row = document.createElement("div");
+      row.className = "result-row";
+      row.innerHTML = '<div class="top"><div><div class="name">' + esc(r.label) + '</div><div class="sub">月間' + qty + '個販売想定・振込1回と仮定</div></div><div class="amount">' + fmtYen(monthlyNet) + '</div></div>';
+      el.appendChild(row);
+    });
+  }
+
+  document.getElementById("in-price").addEventListener("input", compute);
+  document.getElementById("in-shipping").addEventListener("input", compute);
+  var qtyInput = document.getElementById("in-qty");
+  if (qtyInput) qtyInput.addEventListener("input", compute);
+
+  document.getElementById("edition-badge").textContent = EDITION === "full" ? "買い切り版: 複数選択可" : "FREE版: 1つ選択";
+  if (EDITION === "full") {
+    document.getElementById("pro-section").style.display = "none";
+    document.getElementById("history-section").style.display = "block";
+  }
+
+  // ============ CSV出力 ============
+  var csvBtn = document.getElementById("csvBtn");
+  if (csvBtn) {
+    csvBtn.addEventListener("click", function () {
+      var rows = [["出品先", "手取り額(円)", "振込手数料(円)", "入金サイクル"]];
+      lastResults.forEach(function (r) { rows.push([r.label, Math.round(r.net), r.withdrawFee, r.cycle]); });
+      var csv = rows.map(function (r) { return r.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(","); }).join("\n");
+      var blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = "販路比較.csv";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  // ============ シナリオ保存(買い切り版) ============
+  var HISTORY_KEY = "handmade_channel_calc_history_v1";
+  function loadHistory() { try { var v = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+  function saveHistoryList(list) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch (e) { alert("保存に失敗しました(ブラウザの保存容量やプライベートブラウジング設定をご確認ください)。"); } }
+
+  function renderHistoryList() {
+    var listEl = document.getElementById("historyList");
+    if (!listEl) return;
+    var list = loadHistory();
+    if (!list.length) { listEl.innerHTML = '<p class="desc" style="margin:0;">まだ保存されたシナリオはありません。</p>'; return; }
+    listEl.innerHTML = "";
+    list.slice().reverse().forEach(function (entry) {
+      try {
+        var rawLabel = String(entry.label || "(名称未設定)");
+        var label = esc(rawLabel);
+        var row = document.createElement("div");
+        row.className = "history-item";
+        var date = new Date(entry.savedAt || Date.now());
+        var dateStr = date.getFullYear() + "/" + (date.getMonth()+1) + "/" + date.getDate();
+        row.innerHTML = "<div><strong>" + label + "</strong><div class=\"h-meta\">" + dateStr + " ・ " + esc(entry.price || "-") + "円 ・ 最有利: " + esc(entry.bestLabel || "-") + "(" + fmtYen(entry.bestNet || 0) + ")</div></div>";
+        var delBtn = document.createElement("button");
+        delBtn.className = "h-del"; delBtn.textContent = "削除";
+        delBtn.addEventListener("click", function () {
+          if (!confirm("「" + rawLabel + "」を削除しますか?")) return;
+          saveHistoryList(loadHistory().filter(function (e) { return e.id !== entry.id; }));
+          renderHistoryList();
+        });
+        row.appendChild(delBtn);
+        listEl.appendChild(row);
+      } catch (e) { /* 壊れた履歴データはスキップ */ }
+    });
+  }
+
+  var saveHistoryBtn = document.getElementById("saveHistoryBtn");
+  if (saveHistoryBtn) {
+    saveHistoryBtn.addEventListener("click", function () {
+      var label = document.getElementById("historyLabelInput").value.trim();
+      if (!label) { alert("シナリオ名を入力してください(例: アクセサリー3000円帯)"); return; }
+      if (!lastResults.length) { alert("先に出品先を選択してください"); return; }
+      var entry = {
+        id: Date.now() + "-" + Math.random().toString(36).slice(2, 8),
+        label: label, savedAt: Date.now(),
+        price: document.getElementById("in-price").value,
+        bestLabel: lastResults[0].label, bestNet: lastResults[0].net
+      };
+      var list = loadHistory(); list.push(entry);
+      if (list.length > 50) list = list.slice(list.length - 50);
+      saveHistoryList(list);
+      document.getElementById("historyLabelInput").value = "";
+      renderHistoryList();
+    });
+    renderHistoryList();
+  }
+
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!confirm("入力内容をリセットしますか?")) return;
+    document.getElementById("in-price").value = 3000;
+    document.getElementById("in-shipping").value = 0;
+    document.getElementById("in-qty").value = 5;
+    selected = {}; platformOpts = {};
+    document.querySelectorAll(".platform-chip input").forEach(function (i) { i.checked = false; });
+    document.querySelectorAll(".platform-chip").forEach(function (c) { c.classList.remove("selected"); });
+    renderSubOptions();
+    compute();
+  });
+
+  compute();
+})();
+</script>
+</body>
+</html>
