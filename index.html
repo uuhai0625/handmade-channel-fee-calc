@@ -16,7 +16,6 @@
     gtag('config', GA_ID);
   })();
 </script>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ハンドメイド販路 手数料・入金サイクル比較シミュレーター</title>
@@ -239,35 +238,11 @@
         <li>月間販売個数から「月間の実質手取り合計」を試算(振込手数料1回分を控除)</li>
         <li>複数の価格帯・商品シナリオの保存・履歴管理</li>
       </ul>
-      <a class="buy-btn" href="https://uuhai0625.booth.pm/items/8833233" id="buyLink" target="_blank" rel="noopener">買い切り版を見る(BOOTH)</a>
+      <a class="buy-btn" href="https://uuhai0625.booth.pm/items/PLACEHOLDER" id="buyLink" target="_blank" rel="noopener">買い切り版を見る(BOOTH)</a>
     </div>
   </section>
 
-  <section class="card" id="compare-section" style="display:none;">
-    <h2>④ 横断比較</h2>
-    <div style="overflow-x:auto;">
-      <table class="compare" id="compare-table"></table>
-    </div>
-    <div class="btn-row">
-      <button class="btn-secondary" id="csvBtn">CSV出力</button>
-    </div>
-  </section>
-
-  <section class="card" id="monthly-section" style="display:none;">
-    <h2>⑤ 月間の実質手取り試算</h2>
-    <p class="desc">上で入力した「月間の想定販売個数」をもとに、振込手数料を月1回の申請・受取と仮定して試算します。各社の売上繰越条件(例: minneは1,000円未満、メルカリShopsは5,000円未満で翌月繰越)は反映していない簡易試算です。</p>
-    <div id="monthly-results"></div>
-  </section>
-
-  <section class="card" id="history-section" style="display:none;">
-    <h2>⑥ シナリオ保存</h2>
-    <div class="btn-row" style="margin-top:0;">
-      <label for="historyLabelInput" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">シナリオ名</label>
-      <input type="text" id="historyLabelInput" placeholder="例) アクセサリー3000円帯" style="flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-size:.85rem;">
-      <button class="btn-secondary" id="saveHistoryBtn">現在の内容を保存</button>
-    </div>
-    <div id="historyList" style="margin-top:14px;"></div>
-  </section>
+  
 
   <div class="btn-row">
     <button class="btn-secondary" id="resetBtn">入力内容をリセット</button>
@@ -456,10 +431,7 @@
 
     renderResults(results, price, shipping);
 
-    if (EDITION === "full") {
-      renderCompareTable(results);
-      renderMonthly(results);
-    }
+    
   }
 
   function renderResults(results, price, shipping) {
@@ -506,34 +478,7 @@
     return { min: Math.round(Math.min.apply(null, nets)), max: Math.round(Math.max.apply(null, nets)) };
   }
 
-  function renderCompareTable(results) {
-    var section = document.getElementById("compare-section");
-    var table = document.getElementById("compare-table");
-    if (!results.length) { section.style.display = "none"; return; }
-    section.style.display = "block";
-    var rows = results.map(function (r, i) {
-      return "<tr" + (i === 0 && results.length > 1 ? ' class="best-row"' : '') + "><td>" + esc(r.label) + "</td><td>" + fmtYen(r.net) + "</td><td>" + fmtYen(r.withdrawFee) + "</td><td>" + esc(r.cycle) + "</td></tr>";
-    }).join("");
-    table.innerHTML = "<tr><th>出品先</th><th>手取り額</th><th>振込手数料</th><th>入金サイクル</th></tr>" + rows;
-  }
-
-  function renderMonthly(results) {
-    var section = document.getElementById("monthly-section");
-    if (!results.length) { section.style.display = "none"; return; }
-    section.style.display = "block";
-    var qtyRaw = parseInt(document.getElementById("in-qty").value, 10);
-    var qty = Math.max(1, isNaN(qtyRaw) ? 1 : qtyRaw);
-    var el = document.getElementById("monthly-results");
-    el.innerHTML = "";
-    results.forEach(function (r) {
-      var monthlyGross = r.net * qty;
-      var monthlyNet = monthlyGross - r.withdrawFee; // 月1回の振込申請と仮定
-      var row = document.createElement("div");
-      row.className = "result-row";
-      row.innerHTML = '<div class="top"><div><div class="name">' + esc(r.label) + '</div><div class="sub">月間' + qty + '個販売想定・振込1回と仮定</div></div><div class="amount">' + fmtYen(monthlyNet) + '</div></div>';
-      el.appendChild(row);
-    });
-  }
+  
 
   document.getElementById("in-price").addEventListener("input", compute);
   document.getElementById("in-shipping").addEventListener("input", compute);
@@ -541,80 +486,7 @@
   if (qtyInput) qtyInput.addEventListener("input", compute);
 
   document.getElementById("edition-badge").textContent = EDITION === "full" ? "買い切り版: 複数選択可" : "FREE版: 1つ選択";
-  if (EDITION === "full") {
-    document.getElementById("pro-section").style.display = "none";
-    document.getElementById("history-section").style.display = "block";
-  }
-
-  // ============ CSV出力 ============
-  var csvBtn = document.getElementById("csvBtn");
-  if (csvBtn) {
-    csvBtn.addEventListener("click", function () {
-      var rows = [["出品先", "手取り額(円)", "振込手数料(円)", "入金サイクル"]];
-      lastResults.forEach(function (r) { rows.push([r.label, Math.round(r.net), r.withdrawFee, r.cycle]); });
-      var csv = rows.map(function (r) { return r.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(","); }).join("\n");
-      var blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement("a");
-      a.href = url; a.download = "販路比較.csv";
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
-  }
-
-  // ============ シナリオ保存(買い切り版) ============
-  var HISTORY_KEY = "handmade_channel_calc_history_v1";
-  function loadHistory() { try { var v = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
-  function saveHistoryList(list) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch (e) { alert("保存に失敗しました(ブラウザの保存容量やプライベートブラウジング設定をご確認ください)。"); } }
-
-  function renderHistoryList() {
-    var listEl = document.getElementById("historyList");
-    if (!listEl) return;
-    var list = loadHistory();
-    if (!list.length) { listEl.innerHTML = '<p class="desc" style="margin:0;">まだ保存されたシナリオはありません。</p>'; return; }
-    listEl.innerHTML = "";
-    list.slice().reverse().forEach(function (entry) {
-      try {
-        var rawLabel = String(entry.label || "(名称未設定)");
-        var label = esc(rawLabel);
-        var row = document.createElement("div");
-        row.className = "history-item";
-        var date = new Date(entry.savedAt || Date.now());
-        var dateStr = date.getFullYear() + "/" + (date.getMonth()+1) + "/" + date.getDate();
-        row.innerHTML = "<div><strong>" + label + "</strong><div class=\"h-meta\">" + dateStr + " ・ " + esc(entry.price || "-") + "円 ・ 最有利: " + esc(entry.bestLabel || "-") + "(" + fmtYen(entry.bestNet || 0) + ")</div></div>";
-        var delBtn = document.createElement("button");
-        delBtn.className = "h-del"; delBtn.textContent = "削除";
-        delBtn.addEventListener("click", function () {
-          if (!confirm("「" + rawLabel + "」を削除しますか?")) return;
-          saveHistoryList(loadHistory().filter(function (e) { return e.id !== entry.id; }));
-          renderHistoryList();
-        });
-        row.appendChild(delBtn);
-        listEl.appendChild(row);
-      } catch (e) { /* 壊れた履歴データはスキップ */ }
-    });
-  }
-
-  var saveHistoryBtn = document.getElementById("saveHistoryBtn");
-  if (saveHistoryBtn) {
-    saveHistoryBtn.addEventListener("click", function () {
-      var label = document.getElementById("historyLabelInput").value.trim();
-      if (!label) { alert("シナリオ名を入力してください(例: アクセサリー3000円帯)"); return; }
-      if (!lastResults.length) { alert("先に出品先を選択してください"); return; }
-      var entry = {
-        id: Date.now() + "-" + Math.random().toString(36).slice(2, 8),
-        label: label, savedAt: Date.now(),
-        price: document.getElementById("in-price").value,
-        bestLabel: lastResults[0].label, bestNet: lastResults[0].net
-      };
-      var list = loadHistory(); list.push(entry);
-      if (list.length > 50) list = list.slice(list.length - 50);
-      saveHistoryList(list);
-      document.getElementById("historyLabelInput").value = "";
-      renderHistoryList();
-    });
-    renderHistoryList();
-  }
+  
 
   document.getElementById("resetBtn").addEventListener("click", function () {
     if (!confirm("入力内容をリセットしますか?")) return;
